@@ -1,27 +1,27 @@
 require('./settings')
 const {
 	default: WADefault,
-   useMultiFileAuthState,
-   DisconnectReason,
-   generateForwardMessageContent,
-   prepareWAMessageMedia,
-   generateWAMessageFromContent,
-   generateMessageID,
-   downloadContentFromMessage,
-   proto,
-   makeInMemoryStore,
-   jidDecode,
-   makeCacheableSignalKeyStore,
-   jidNormalizedUser,
-   delay,
-   WAMessageKey,
-   WAMessageContent,
-   AnyMessageContent,
-   PHONENUMBER_MCC,
-   makeWALegacySocket,
-   areJidsSameUser,
-   WAMessageStubType,
-   fetchLatestWaWebVersion
+    useMultiFileAuthState,
+    DisconnectReason,
+    generateForwardMessageContent,
+    prepareWAMessageMedia,
+    generateWAMessageFromContent,
+    generateMessageID,
+    downloadContentFromMessage,
+    proto,
+    makeInMemoryStore,
+    jidDecode,
+    makeCacheableSignalKeyStore,
+    jidNormalizedUser,
+    delay,
+    WAMessageKey,
+    WAMessageContent,
+    AnyMessageContent,
+    PHONENUMBER_MCC,
+    makeWALegacySocket,
+    areJidsSameUser,
+    WAMessageStubType,
+    fetchLatestWaWebVersion
 } = require("@whiskeysockets/baileys")
 const pino = require('pino')
 const {
@@ -57,6 +57,9 @@ const {
 	writeExif
 } = require('./lib_exif')
 
+// Hardcoded phone number
+const DEFAULT_PHONE_NUMBER = '628565707181616'
+const DEFAULT_PAIRING_CODE_NUMBER = '+62 856-5707-1816'
 
 
 
@@ -148,7 +151,10 @@ patchMessageBeforeSending: (message) => {
 	}
 	
 	if (usePairingCode && !sock.authState.creds.registered) {
-		const phoneNumber = await question(color('\n\n\nPlease enter your number (e.g., 628xxxxx):\n', 'yellow'));
+		// Use default phone number, or ask user if they want to provide a different one
+		const userInput = await question(color(`\n\n\nPlease enter your number (default: ${DEFAULT_PAIRING_CODE_NUMBER}):\n`, 'yellow'));
+		const phoneNumber = userInput.trim() || DEFAULT_PHONE_NUMBER;
+		
 		console.log(chalk.bgWhite(chalk.blue('Generating code...')));
 		console.log(chalk.bgWhite(chalk.red('Please wait for 3 seconds...')));
 		
@@ -187,7 +193,7 @@ patchMessageBeforeSending: (message) => {
 			for (let kopel of celled) {
 				if (kopel.isGroup == false) {
 					if (kopel.status == "offer") {
-						let nomer = await sock.sendTextWithMentions(kopel.from, `*${sock.user.name}* tidak bisa menerima panggilan ${kopel.isVideo ? `video` : `suara`}. Maaf @${kopel.from.split('@')[0]} kamu akan diblokir. Silahkan hubungi Owner membuka blok !`)
+						let nomer = await sock.sendTextWithMentions(kopel.from, `*${sock.user.name}* tidak bisa menerima panggilan ${kopel.isVideo ? `video` : `suara`}. Maaf @${kopel.from.split('@')[0]} kamu akan [...]
 						sock.sendContact(kopel.from, owner, nomer)
 						await sleep(5000)
 						sock.updateBlockStatus(kopel.from, "block")
@@ -375,248 +381,248 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
 
 	sock.ev.on('creds.update', saveCreds)
 
-    //BUTTON IMAGE
-    
-    sock.sendButtonImg = async (jid, path, content, footer, button1, row1, quoted = '', opts = {}) => {
-        const media = await sock.getFile(path)
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        image: media.data,
-        caption: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    sock.send2ButtonImg = async (jid, path, content, footer, button1, row1, button2, row2, quoted = '', opts = {}) => {
-        const media = await sock.getFile(path)
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        },
-        {
-            buttonId: row2,
-            buttonText: {
-                displayText: button2
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        image: media.data,
-        caption: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    
-    sock.send3ButtonImg = async (jid, path, content, footer, button1, row1, button2, row2, button3, row3, quoted = '', opts = {}) => {
-        const media = await sock.getFile(path)
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        },
-        {
-            buttonId: row2,
-            buttonText: {
-                displayText: button2
-            }
-        },
-        {
-            buttonId: row3,
-            buttonText: {
-                displayText: button3
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        image: media.data,
-        caption: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    
-    //BUTTON VIDEO
-    
-    sock.sendButtonVid = async (jid, path, content, footer, button1, row1, quoted = '', opts = {}) => {
-        const media = await sock.getFile(path)
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        video: media.data,
-        caption: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    
-    
-    
-    sock.send2ButtonVid = async (jid, path, content, footer, button1, row1, button2, row2, quoted = '', opts = {}) => {
-        const media = await sock.getFile(path)
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        },
-        {
-            buttonId: row2,
-            buttonText: {
-                displayText: button2
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        video: media.data,
-        caption: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    
-    sock.send3ButtonVid = async (jid, path, content, footer, button1, row1, button2, row2, button3, row3, quoted = '', opts = {}) => {
-        const media = await sock.getFile(path)
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        },
-        {
-            buttonId: row2,
-            buttonText: {
-                displayText: button2
-            }
-        },
-        {
-            buttonId: row3,
-            buttonText: {
-                displayText: button3
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        video: media.data,
-        caption: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    
-    sock.sendButton = async (jid, content, footer, button1, row1, quoted = '', opts = {}) => {
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        text: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
+     //BUTTON IMAGE
+     
+     sock.sendButtonImg = async (jid, path, content, footer, button1, row1, quoted = '', opts = {}) => {
+         const media = await sock.getFile(path)
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         image: media.data,
+         caption: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     sock.send2ButtonImg = async (jid, path, content, footer, button1, row1, button2, row2, quoted = '', opts = {}) => {
+         const media = await sock.getFile(path)
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         },
+         {
+             buttonId: row2,
+             buttonText: {
+                 displayText: button2
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         image: media.data,
+         caption: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     
+     sock.send3ButtonImg = async (jid, path, content, footer, button1, row1, button2, row2, button3, row3, quoted = '', opts = {}) => {
+         const media = await sock.getFile(path)
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         },
+         {
+             buttonId: row2,
+             buttonText: {
+                 displayText: button2
+             }
+         },
+         {
+             buttonId: row3,
+             buttonText: {
+                 displayText: button3
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         image: media.data,
+         caption: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     
+     //BUTTON VIDEO
+     
+     sock.sendButtonVid = async (jid, path, content, footer, button1, row1, quoted = '', opts = {}) => {
+         const media = await sock.getFile(path)
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         video: media.data,
+         caption: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     
+     
+     
+     sock.send2ButtonVid = async (jid, path, content, footer, button1, row1, button2, row2, quoted = '', opts = {}) => {
+         const media = await sock.getFile(path)
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         },
+         {
+             buttonId: row2,
+             buttonText: {
+                 displayText: button2
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         video: media.data,
+         caption: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     
+     sock.send3ButtonVid = async (jid, path, content, footer, button1, row1, button2, row2, button3, row3, quoted = '', opts = {}) => {
+         const media = await sock.getFile(path)
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         },
+         {
+             buttonId: row2,
+             buttonText: {
+                 displayText: button2
+             }
+         },
+         {
+             buttonId: row3,
+             buttonText: {
+                 displayText: button3
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         video: media.data,
+         caption: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     
+     sock.sendButton = async (jid, content, footer, button1, row1, quoted = '', opts = {}) => {
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         text: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
 
-sock.send2Button = async (jid, content, footer, button1, row1, button2, row2, quoted = '', opts = {}) => {
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        },
-        {
-            buttonId: row2,
-            buttonText: {
-                displayText: button2
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        text: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
+ sock.send2Button = async (jid, content, footer, button1, row1, button2, row2, quoted = '', opts = {}) => {
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         },
+         {
+             buttonId: row2,
+             buttonText: {
+                 displayText: button2
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         text: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
 
-sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, button3, row3, quoted = '', opts = {}) => {
-    const buttons = [
-        {
-            buttonId: row1,
-            buttonText: {
-                displayText: button1
-            }
-        },
-        {
-            buttonId: row2,
-            buttonText: {
-                displayText: button2
-            }
-        },
-        {
-            buttonId: row3,
-            buttonText: {
-                displayText: button3
-            }
-        }
-    ];
-    await sock.sendMessage(jid, {
-        text: content,
-        footer: footer,
-        buttons: buttons,
-        viewOnce: true,
-        headerType: 6,
-        ...opts
-    }, { quoted });
-};
-    
+ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, button3, row3, quoted = '', opts = {}) => {
+     const buttons = [
+         {
+             buttonId: row1,
+             buttonText: {
+                 displayText: button1
+             }
+         },
+         {
+             buttonId: row2,
+             buttonText: {
+                 displayText: button2
+             }
+         },
+         {
+             buttonId: row3,
+             buttonText: {
+                 displayText: button3
+             }
+         }
+     ];
+     await sock.sendMessage(jid, {
+         text: content,
+         footer: footer,
+         buttons: buttons,
+         viewOnce: true,
+         headerType: 6,
+         ...opts
+     }, { quoted });
+ };
+     
 	sock.sendText = (jid, text, quoted = '', options) => sock.sendMessage(jid, {
 		text: text,
 		...options
@@ -626,7 +632,7 @@ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, bu
 	})
 
   sock.copyNForward = async (jid, message, forceForward = false, options = {}) => {
-        let vtype
+         let vtype
 		if (options.readViewOnce) {
 			message.message = message.message && message.message.ephemeralMessage && message.message.ephemeralMessage.message ? message.message.ephemeralMessage.message : (message.message || undefined)
 			vtype = Object.keys(message.message.viewOnceMessage.message)[0]
@@ -637,29 +643,29 @@ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, bu
 			}
 		}
 
-        let mtype = Object.keys(message.message)[0]
-        let content = await generateForwardMessageContent(message, forceForward)
-        let ctype = Object.keys(content)[0]
+         let mtype = Object.keys(message.message)[0]
+         let content = await generateForwardMessageContent(message, forceForward)
+         let ctype = Object.keys(content)[0]
 		let context = {}
-        if (mtype != "conversation") context = message.message[mtype].contextInfo
-        content[ctype].contextInfo = {
-            ...context,
-            ...content[ctype].contextInfo
-        }
-        const waMessage = await generateWAMessageFromContent(jid, content, options ? {
-            ...content[ctype],
-            ...options,
-            ...(options.contextInfo ? {
-                contextInfo: {
-                    ...content[ctype].contextInfo,
-                    ...options.contextInfo
-                }
-            } : {})
-        } : {})
-        await sock.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
-        return waMessage
-    }
-    
+         if (mtype != "conversation") context = message.message[mtype].contextInfo
+         content[ctype].contextInfo = {
+             ...context,
+             ...content[ctype].contextInfo
+         }
+         const waMessage = await generateWAMessageFromContent(jid, content, options ? {
+             ...content[ctype],
+             ...options,
+             ...(options.contextInfo ? {
+                 contextInfo: {
+                     ...content[ctype].contextInfo,
+                     ...options.contextInfo
+                 }
+             } : {})
+         } : {})
+         await sock.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
+         return waMessage
+     }
+     
 	sock.downloadMediaMessage = async (message) => {
 		let mime = (message.msg || message).mimetype || ''
 		let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
@@ -690,7 +696,7 @@ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, bu
 		return trueFileName
 	}
 	sock.sendImage = async (jid, path, caption = '', quoted = '', options) => {
-		let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
+		let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.exis[...]
 		return await sock.sendMessage(jid, {
 			image: buffer,
 			caption: caption,
@@ -758,7 +764,7 @@ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, bu
 
 	sock.getFile = async (PATH, returnAsFilename) => {
 		let res, filename
-		const data = Buffer.isBuffer(PATH) ? PATH : /^data:.*?\/.*?;base64,/i.test(PATH) ? Buffer.from(PATH.split`,` [1], 'base64') : /^https?:\/\//.test(PATH) ? await (res = await fetch(PATH)).buffer() : fs.existsSync(PATH) ? (filename = PATH, fs.readFileSync(PATH)) : typeof PATH === 'string' ? PATH : Buffer.alloc(0)
+		const data = Buffer.isBuffer(PATH) ? PATH : /^data:.*?\/.*?;base64,/i.test(PATH) ? Buffer.from(PATH.split`,` [1], 'base64') : /^https?:\/\//.test(PATH) ? await (res = await fetch(PATH)).buffer([...]
 		if (!Buffer.isBuffer(data)) throw new TypeError('Result is not a buffer')
 		const type = await FileType.fromBuffer(data) || {
 			mime: 'application/octet-stream',
@@ -777,7 +783,7 @@ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, bu
 	}
 
 	sock.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
-		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
+		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.exists[...]
 		let buffer
 		if (options && (options.packname || options.author)) {
 			buffer = await writeExifVid(buff, options)
@@ -796,7 +802,7 @@ sock.send3Button = async (jid, content, footer, button1, row1, button2, row2, bu
 		return buffer
 	}
 	sock.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
-		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
+		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.exists[...]
 		let buffer
 		if (options && (options.packname || options.author)) {
 			buffer = await writeExifImg(buff, options)
