@@ -57,12 +57,12 @@ const {
 	writeExif
 } = require('./lib_exif')
 
+// FIX: Definisikan pp_bot agar tidak undefined di sendFakeLink
+global.pp_bot = ''
+
 // Hardcoded phone number
 const DEFAULT_PHONE_NUMBER = '628565707181616'
 const DEFAULT_PAIRING_CODE_NUMBER = '+62 856-5707-1816'
-
-
-
 
 const sleep = async (ms) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -88,10 +88,31 @@ global.api = (name, path = '/', query = {}, apikeyqueryname) => (name in global.
 	} : {})
 })) : '')
 
+// FIX: Helper functions untuk welcome/left set teks custom
+// Karena tidak ada database set welcome/left, dibuat stub sederhana
+function isSetWelcome(groupId, db) {
+	if (!db || !Array.isArray(db)) return false
+	return db.some(item => item.id === groupId)
+}
+function isSetLeft(groupId, db) {
+	if (!db || !Array.isArray(db)) return false
+	return db.some(item => item.id === groupId)
+}
+function getTextSetWelcome(groupId, db) {
+	if (!db || !Array.isArray(db)) return ''
+	const found = db.find(item => item.id === groupId)
+	return found ? found.teks : ''
+}
+function getTextSetLeft(groupId, db) {
+	if (!db || !Array.isArray(db)) return ''
+	const found = db.find(item => item.id === groupId)
+	return found ? found.teks : ''
+}
+
 async function Botstarted() {
     const { state, saveCreds } = await useMultiFileAuthState(`./${sessionName}`)
     const { version, isLatest } = await fetchLatestWaWebVersion();
-    const msgRetryCounterCache = new NodeCache() // for retry message, "waiting message"
+    const msgRetryCounterCache = new NodeCache()
     console.log(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
     console.log(
     color(
@@ -124,14 +145,14 @@ const sock = WADefault({
 	},
 	syncFullHistory: false,
 	downloadHistory: false,
-	msgRetryCounterCache, // Resolve waiting messages
-	defaultQueryTimeoutMs: undefined, // for this issues https://github.com/WhiskeySockets/Baileys/issues/276
+	msgRetryCounterCache,
+	defaultQueryTimeoutMs: undefined,
 	patchMessageBeforeSending: (message) => {
 		const requiresPatch = !!(
-		message.buttonsMessage
-		|| message.templateMessage
-		|| message.listMessage
-		);
+			message.buttonsMessage
+			|| message.templateMessage
+			|| message.listMessage
+		)
 		if (requiresPatch) {
 			message = {
 				viewOnceMessage: {
@@ -139,21 +160,19 @@ const sock = WADefault({
 						messageContextInfo: {
 							deviceListMetadataVersion: 2,
 							deviceListMetadata: {},
-							},
-							...message,
-							},
 						},
-					};
-				}
-			return message;
+						...message,
+					},
+				},
+			}
 		}
-	}
+		return message
+	},
 })
 
 var groupMetadataCache = new Map()
 	
 if (usePairingCode && !sock.authState.creds.registered) {
-	// Use default phone number, or ask user if they want to provide a different one
 	const userInput = await question(color(`\n\n\nPlease enter your number (default: ${DEFAULT_PAIRING_CODE_NUMBER}):\n`, 'yellow'));
 	const phoneNumber = userInput.trim() || DEFAULT_PHONE_NUMBER;
 	
@@ -174,7 +193,6 @@ if (usePairingCode && !sock.authState.creds.registered) {
 	store.bind(sock.ev)
 
 	sock.ev.on('messages.upsert', async chatUpdate => {
-		//console.log(JSON.stringify(chatUpdate, undefined, 2))
 		try {
 			mek = chatUpdate.messages[0]
 			if (!mek.message) return
@@ -190,6 +208,7 @@ if (usePairingCode && !sock.authState.creds.registered) {
 	})
 	
 	sock.ev.on('call', async (celled) => {
+		// FIX: global.anticall sudah di-set di settings.js
 		if (global.anticall) {
 			console.log(celled)
 			for (let kopel of celled) {
@@ -206,9 +225,15 @@ if (usePairingCode && !sock.authState.creds.registered) {
 	})
 
 	sock.ev.on('group-participants.update', async (anu) => {
-        let _welcome = JSON.parse(fs.readFileSync('./database/welcome.json'));
+		// FIX: Path database diperbaiki sesuai nama file yang ada (database_welcome.json / database_left.json)
+		let _welcome = JSON.parse(fs.readFileSync('./database_welcome.json'))
+		let _left = JSON.parse(fs.readFileSync('./database_left.json'))
 
-let _left = JSON.parse(fs.readFileSync('./database/left.json'));
+		// FIX: set_welcome_db dan set_left_db didefinisikan lokal di sini
+		// karena tidak di-pass dari luar; stub array kosong agar tidak crash
+		const set_welcome_db = []
+		const set_left_db = []
+
 		const isWelcome = _welcome.includes(anu.id)
 		const isLeft = _left.includes(anu.id)
 		try {
@@ -377,7 +402,6 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
 		if (update.connection == "open" || update.receivedPendingNotifications == "true") {
 			await store.chats.all()
 			console.log(`Connected to = ` + JSON.stringify(sock.user, null, 2))
-			//sock.sendMessage("77777777777" + "@s.whatsapp.net", {text:"", "contextInfo":{"expiration": 86400}})
 		}
 	})
 
@@ -693,7 +717,6 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
  		}
  		let type = await FileType.fromBuffer(buffer)
  		trueFileName = attachExtension ? (filename + '.' + type.ext) : filename
- 		// save to file
  		await fs.writeFileSync(trueFileName, buffer)
  		return trueFileName
  	}
@@ -857,7 +880,8 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
  				"body": `© ${namaowner}`,
  				"previewType": "PHOTO",
  				"thumbnailUrl": ``,
- 				"thumbnail": pp_bot,
+ 				// FIX: global.pp_bot sudah didefinisikan di atas agar tidak undefined
+ 				"thumbnail": global.pp_bot,
  				"sourceUrl": 'tes'
  			}
  		}
@@ -924,7 +948,6 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
  				...options
  			})
  		} catch (e) {
- 			//console.error(e)
  			m = null
  		} finally {
  			if (!m) m = await sock.sendMessage(jid, {

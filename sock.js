@@ -19,7 +19,8 @@ const speed = require('performance-now')
 const cheerio = require('cheerio')
 const axios = require('axios');
 const moment = require('moment-timezone');
-const ms = toMs = require('ms');
+// FIX: Hapus require('ms') karena package 'ms' tidak ada di package.json
+// ms/toMs tidak dipakai secara aktif di kode ini
 const FormData = require("form-data");
 const similarity = require('similarity');
 const didyoumean = require('didyoumean');
@@ -28,7 +29,9 @@ const {
 } = require('file-type')
 const {
     clockString,
-    formatp
+    formatp,
+    // FIX: Import getRandom dari lib_myfunc agar tidak undefined
+    getRandom
 } = require("./lib_myfunc")
 const {
 	fetchBuffer
@@ -99,7 +102,7 @@ module.exports = sock = async (sock, m, chatUpdate, store, opengc, antilink, ant
 		const body = (m.mtype === 'conversation') ? m.message.conversation : (m.mtype == 'imageMessage') ? m.message.imageMessage.caption : (m.mtype == 'videoMessage') ? m.message.videoMessage.caption : (m.mtype == 'extendedTextMessage') ? m.message.extendedTextMessage.text : (m.mtype == 'buttonsResponseMessage') ? m.message.buttonsResponseMessage.selectedButtonId : (m.mtype == 'listResponseMessage') ? m.message.listResponseMessage.singleSelectReply.selectedRowId : (m.mtype == 'templateButtonReplyMessage') ? m.message.templateButtonReplyMessage.selectedId : (m.mtype === 'messageContextInfo') ? (m.message.buttonsResponseMessage?.selectedButtonId || m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text) : '.'
 const bady = (m.mtype === 'conversation') ? m.message.conversation : (m.mtype == 'imageMessage') ? m.message.imageMessage.caption : (m.mtype == 'videoMessage') ? m.message.videoMessage.caption : (m.mtype == 'extendedTextMessage') ? m.message.extendedTextMessage.text : (m.mtype == 'buttonsResponseMessage') ? m.message.buttonsResponseMessage.selectedButtonId : (m.mtype == 'listResponseMessage') ? m.message.listResponseMessage.singleSelectReply.selectedRowId : (m.mtype == 'templateButtonReplyMessage') ? m.message.templateButtonReplyMessage.selectedId : (m.mtype == 'interactiveResponseMessage') ? appenTextMessage(JSON.parse(m.msg.nativeFlowResponseMessage.paramsJson).id, chatUpdate) : (m.mtype == 'templateButtonReplyMessage') ? appenTextMessage(m.msg.selectedId, chatUpdate) : (m.mtype === 'messageContextInfo') ? (m.message.buttonsResponseMessage?.selectedButtonId || m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text) : ' '
 		var budy = (typeof m.text == 'string' ? m.text : '')
-		const isCmd = /^[_=|~!?#/$%^&.+-,\\\^]/.test(body)
+		const isCmd = /^[_=|~!?#/$%^&.+-,\\\^]/.test(body)
 		const prefix = isCmd ? budy[0] : ''
 		const defPrefix = '.';
 		const command = isCmd ? body.slice(1).trim().split(' ').shift().toLowerCase() : ''
@@ -127,7 +130,7 @@ const bady = (m.mtype === 'conversation') ? m.message.conversation : (m.mtype ==
 		}
 		
 	// Kalau pmBlock aktif, bot ignore chat pribadi
-if (pmBlock && !m.isGroup && !isOwner) return
+if (pmBlock && !m.isGroup && !isCreator) return
 
 if (m.message && !m.key.fromMe) {
     const time = new Date().toLocaleString()
@@ -270,28 +273,18 @@ sock.sendPresenceUpdate('composing', m.chat);
 					return
 				}
 				const steps = [
-					{ key: 'judul',        label: 'Judul',         next: '📌 *[2/12]* Kirim *tipe* konten:
-_(contoh: Novel Terjemahan, Manhwa, dll)_' },
-					{ key: 'tipe',         label: 'Tipe',          next: '📌 *[3/12]* Kirim *genre*:
-_(pisahkan dengan · contoh: Romance · Fantasy · Action)_' },
-					{ key: 'genre',        label: 'Genre',         next: '📌 *[4/12]* Kirim *status*:
-_(Ongoing / Completed)_' },
-					{ key: 'status',       label: 'Status',        next: '📌 *[5/12]* Kirim *bahasa*:
-_(contoh: Indonesia)_' },
-					{ key: 'bahasa',       label: 'Bahasa',        next: '📌 *[6/12]* Kirim *format file*:
-_(contoh: PDF, EPUB, dll)_' },
-					{ key: 'format',       label: 'Format File',   next: '📌 *[7/12]* Kirim *tanggal posting*:
-_(contoh: 16 Maret 2026)_' },
-					{ key: 'tanggal',      label: 'Tanggal',       next: '📌 *[8/12]* Kirim *nama author*:
-_(ketik - jika tidak ada)_' },
+					{ key: 'judul',        label: 'Judul',         next: '📌 *[2/12]* Kirim *tipe* konten:\n_(contoh: Novel Terjemahan, Manhwa, dll)_' },
+					{ key: 'tipe',         label: 'Tipe',          next: '📌 *[3/12]* Kirim *genre*:\n_(pisahkan dengan · contoh: Romance · Fantasy · Action)_' },
+					{ key: 'genre',        label: 'Genre',         next: '📌 *[4/12]* Kirim *status*:\n_(Ongoing / Completed)_' },
+					{ key: 'status',       label: 'Status',        next: '📌 *[5/12]* Kirim *bahasa*:\n_(contoh: Indonesia)_' },
+					{ key: 'bahasa',       label: 'Bahasa',        next: '📌 *[6/12]* Kirim *format file*:\n_(contoh: PDF, EPUB, dll)_' },
+					{ key: 'format',       label: 'Format File',   next: '📌 *[7/12]* Kirim *tanggal posting*:\n_(contoh: 16 Maret 2026)_' },
+					{ key: 'tanggal',      label: 'Tanggal',       next: '📌 *[8/12]* Kirim *nama author*:\n_(ketik - jika tidak ada)_' },
 					{ key: 'author',       label: 'Author',        next: '📌 *[9/12]* Kirim *link cover* (URL gambar langsung):' },
-					{ key: 'cover',        label: 'Cover',         next: '📌 *[10/12]* Kirim *sinopsis*:
-_(bisa multi-baris, kirim semua sekaligus)_' },
+					{ key: 'cover',        label: 'Cover',         next: '📌 *[10/12]* Kirim *sinopsis*:\n_(bisa multi-baris, kirim semua sekaligus)_' },
 					{ key: 'sinopsis',     label: 'Sinopsis',      next: '📌 *[11/12]* Kirim *link download*:' },
-					{ key: 'linkdownload', label: 'Link Download', next: '📌 *[12/12]* Kirim *nama file*:
-_(contoh: Judul Novel - PDF)_' },
-					{ key: 'namafile',     label: 'Nama File',     next: '📌 *[12/12 lanjutan]* Kirim *part*:
-_(contoh: Part 1, Full, dll)_' },
+					{ key: 'linkdownload', label: 'Link Download', next: '📌 *[12/12]* Kirim *nama file*:\n_(contoh: Judul Novel - PDF)_' },
+					{ key: 'namafile',     label: 'Nama File',     next: '📌 *[12/12 lanjutan]* Kirim *part*:\n_(contoh: Part 1, Full, dll)_' },
 					{ key: 'part',         label: 'Part',          next: null },
 				]
 				const stepNow = sesi.step
@@ -425,7 +418,7 @@ _(contoh: Part 1, Full, dll)_' },
 
 		switch (command) {
 		
-   //HANYA CONTH FITUR CEK SERVER, SISA NYA ADD SESUKA HATI KALIAN :3//
+   //HANYA CONTOH FITUR CEK SERVER, SISA NYA ADD SESUKA HATI KALIAN :3//
 		
                 case 'tes': case 'test': case 'bot': {
     let timestamp = speed()
@@ -535,6 +528,7 @@ break
 	if (!/webp/.test(mime)) return reply(`Reply sticker with caption *${prefix + command}*`)
 	await loading()
 	let media = await sock.downloadAndSaveMediaMessage(quoted)
+	// FIX: getRandom sudah di-import dari lib_myfunc
 	let ran = await getRandom('.png')
 	exec(`ffmpeg -i ${media} ${ran}`, (err) => {
 		fs.unlinkSync(media)
@@ -548,7 +542,8 @@ break
 		
 		
                 case 'tovideo': case 'tomp4': case 'tovid': {
-        let { webp2mp4, webp2png } = require('./lib/webp2mp4');
+        // FIX: Path require diperbaiki — tidak ada folder ./lib/, file ada di root
+        let { webp2mp4File: webp2mp4 } = require('./lib_myfunc2');
                       if (!/webp/.test(mime)) return reply(`Balas stiker dengan caption *${prefix + command}*`)
   let media = await m.quoted.download();
   let out = Buffer.alloc(0);
@@ -686,20 +681,13 @@ break;
 					
 					
 			// =================== TEMPLATE HTML NOVEL/KONTEN (WIZARD) ===================
-			// Cara pakai: .template → bot tanya step by step, hanya pengirim cmd yang bisa jawab
-			// Kirim "batal" kapan saja untuk membatalkan sesi
-			// ===========================================================================
-
 			case 'template': case 'tmplt': {
-				// Hanya owner/creator yang bisa pakai
 				if (!isCreator) return reply(`❌ Fitur ini hanya untuk owner!`)
 
-				// Jika sudah ada sesi aktif milik pengirim ini, tolak mulai ulang
 				if (global.templateSesi && global.templateSesi[m.sender] && global.templateSesi[m.sender].aktif) {
 					return reply(`⚠️ Kamu sudah punya sesi template yang sedang berjalan.\nKirim *batal* untuk membatalkan sesi sebelumnya.`)
 				}
 
-				// Inisialisasi sesi
 				if (!global.templateSesi) global.templateSesi = {}
 				global.templateSesi[m.sender] = {
 					aktif: true,
@@ -719,13 +707,11 @@ break;
     let args = noPrefix.trim().split` `.slice(1);
     let alias = await listcase();
 
-    // Jika `noPrefix` ada di `alias`, langsung lanjutkan tanpa eksekusi tambahan
     if (alias.includes(noPrefix)) return
         let mean = didyoumean(noPrefix, alias);
         let sim = similarity(noPrefix, mean);
         let som = sim * 100;
 
-        // Jika persentase 100%, jangan eksekusi logika berikutnya
         if (som === 100) return
         let tio = `ᴀᴘᴀᴋᴀʜ ᴋᴀᴍᴜ ᴍᴇɴᴄᴏʙᴀ ᴍᴇɴɢɢᴜɴᴀᴋᴀɴ ᴄᴏᴍᴍᴀɴᴅ ʙᴇʀɪᴋᴜᴛ ɪɴɪ??
 
