@@ -126,45 +126,47 @@ const sock = WADefault({
 	downloadHistory: false,
 	msgRetryCounterCache, // Resolve waiting messages
 	defaultQueryTimeoutMs: undefined, // for this issues https://github.com/WhiskeySockets/Baileys/issues/276
-})
-patchMessageBeforeSending: (message) => {
-	const requiresPatch = !!(
-	message.buttonsMessage
-	|| message.templateMessage
-	|| message.listMessage
-	);
-	if (requiresPatch) {
-		message = {
-			viewOnceMessage: {
-				message: {
-					messageContextInfo: {
-						deviceListMetadataVersion: 2,
-						deviceListMetadata: {},
+	patchMessageBeforeSending: (message) => {
+		const requiresPatch = !!(
+		message.buttonsMessage
+		|| message.templateMessage
+		|| message.listMessage
+		);
+		if (requiresPatch) {
+			message = {
+				viewOnceMessage: {
+					message: {
+						messageContextInfo: {
+							deviceListMetadataVersion: 2,
+							deviceListMetadata: {},
+							},
+							...message,
+							},
 						},
-						...message,
-						},
-					},
-				};
-			}
-		return message;
-		var groupMetadataCache = new Map()
+					};
+				}
+			return message;
+		}
 	}
+})
+
+var groupMetadataCache = new Map()
 	
-	if (usePairingCode && !sock.authState.creds.registered) {
-		// Use default phone number, or ask user if they want to provide a different one
-		const userInput = await question(color(`\n\n\nPlease enter your number (default: ${DEFAULT_PAIRING_CODE_NUMBER}):\n`, 'yellow'));
-		const phoneNumber = userInput.trim() || DEFAULT_PHONE_NUMBER;
-		
-		console.log(chalk.bgWhite(chalk.blue('Generating code...')));
-		console.log(chalk.bgWhite(chalk.red('Please wait for 3 seconds...')));
-		
-		setTimeout(async () => {
-			try {
-				let code = await sock.requestPairingCode(phoneNumber);
-				code = code?.match(/.{1,4}/g)?.join("-") || code;
-				console.log(`Your Pairing Code: ${code}`);
-			} catch (error) {
-				console.error(chalk.bgRed(chalk.white('Error generating pairing code:')), error);
+if (usePairingCode && !sock.authState.creds.registered) {
+	// Use default phone number, or ask user if they want to provide a different one
+	const userInput = await question(color(`\n\n\nPlease enter your number (default: ${DEFAULT_PAIRING_CODE_NUMBER}):\n`, 'yellow'));
+	const phoneNumber = userInput.trim() || DEFAULT_PHONE_NUMBER;
+	
+	console.log(chalk.bgWhite(chalk.blue('Generating code...')));
+	console.log(chalk.bgWhite(chalk.red('Please wait for 3 seconds...')));
+	
+	setTimeout(async () => {
+		try {
+			let code = await sock.requestPairingCode(phoneNumber);
+			code = code?.match(/.{1,4}/g)?.join("-") || code;
+			console.log(`Your Pairing Code: ${code}`);
+		} catch (error) {
+			console.error(chalk.bgRed(chalk.white('Error generating pairing code:')), error);
 		}
 	}, 3000);
 }
@@ -193,7 +195,7 @@ patchMessageBeforeSending: (message) => {
 			for (let kopel of celled) {
 				if (kopel.isGroup == false) {
 					if (kopel.status == "offer") {
-						let nomer = await sock.sendTextWithMentions(kopel.from, `*${sock.user.name}* tidak bisa menerima panggilan ${kopel.isVideo ? `video` : `suara`}. Maaf @${kopel.from.split('@')[0]} kamu akan [...]
+						let nomer = await sock.sendTextWithMentions(kopel.from, `*${sock.user.name}* tidak bisa menerima panggilan ${kopel.isVideo ? `video` : `suara`}. Maaf @${kopel.from.split('@')[0]} kamu akan diblokir`)
 						sock.sendContact(kopel.from, owner, nomer)
 						await sleep(5000)
 						sock.updateBlockStatus(kopel.from, "block")
@@ -623,30 +625,30 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
      }, { quoted });
  };
      
-	sock.sendText = (jid, text, quoted = '', options) => sock.sendMessage(jid, {
-		text: text,
-		...options
-	}, {
-		quoted,
-		...options
-	})
+ 	sock.sendText = (jid, text, quoted = '', options) => sock.sendMessage(jid, {
+ 		text: text,
+ 		...options
+ 	}, {
+ 		quoted,
+ 		...options
+ 	})
 
-  sock.copyNForward = async (jid, message, forceForward = false, options = {}) => {
+   sock.copyNForward = async (jid, message, forceForward = false, options = {}) => {
          let vtype
-		if (options.readViewOnce) {
-			message.message = message.message && message.message.ephemeralMessage && message.message.ephemeralMessage.message ? message.message.ephemeralMessage.message : (message.message || undefined)
-			vtype = Object.keys(message.message.viewOnceMessage.message)[0]
-			delete(message.message && message.message.ignore ? message.message.ignore : (message.message || undefined))
-			delete message.message.viewOnceMessage.message[vtype].viewOnce
-			message.message = {
-				...message.message.viewOnceMessage.message
-			}
-		}
+ 		if (options.readViewOnce) {
+ 			message.message = message.message && message.message.ephemeralMessage && message.message.ephemeralMessage.message ? message.message.ephemeralMessage.message : (message.message || undefined)
+ 			vtype = Object.keys(message.message.viewOnceMessage.message)[0]
+ 			delete(message.message && message.message.ignore ? message.message.ignore : (message.message || undefined))
+ 			delete message.message.viewOnceMessage.message[vtype].viewOnce
+ 			message.message = {
+ 				...message.message.viewOnceMessage.message
+ 			}
+ 		}
 
          let mtype = Object.keys(message.message)[0]
          let content = await generateForwardMessageContent(message, forceForward)
          let ctype = Object.keys(content)[0]
-		let context = {}
+ 		let context = {}
          if (mtype != "conversation") context = message.message[mtype].contextInfo
          content[ctype].contextInfo = {
              ...context,
@@ -664,288 +666,288 @@ Terima Kasih Kak @${num.split("@")[0]} Sampai Bertemu Kembali Di Group ${metadat
          } : {})
          await sock.relayMessage(jid, waMessage.message, { messageId:  waMessage.key.id })
          return waMessage
-     }
+      }
      
-	sock.downloadMediaMessage = async (message) => {
-		let mime = (message.msg || message).mimetype || ''
-		let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
-		const stream = await downloadContentFromMessage(message, messageType)
-		let buffer = Buffer.from([])
-		for await (const chunk of stream) {
-			buffer = Buffer.concat([buffer, chunk])
-		}
+ 	sock.downloadMediaMessage = async (message) => {
+ 		let mime = (message.msg || message).mimetype || ''
+ 		let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
+ 		const stream = await downloadContentFromMessage(message, messageType)
+ 		let buffer = Buffer.from([])
+ 		for await (const chunk of stream) {
+ 			buffer = Buffer.concat([buffer, chunk])
+ 		}
 
-		return buffer
-	}
+ 		return buffer
+ 	}
 
-	sock.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
+ 	sock.downloadAndSaveMediaMessage = async (message, filename, attachExtension = true) => {
 
-		let quoted = message.msg ? message.msg : message
+ 		let quoted = message.msg ? message.msg : message
 
-		let mime = (message.msg || message).mimetype || ''
-		let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
-		const stream = await downloadContentFromMessage(quoted, messageType)
-		let buffer = Buffer.from([])
-		for await (const chunk of stream) {
-			buffer = Buffer.concat([buffer, chunk])
-		}
-		let type = await FileType.fromBuffer(buffer)
-		trueFileName = attachExtension ? (filename + '.' + type.ext) : filename
-		// save to file
-		await fs.writeFileSync(trueFileName, buffer)
-		return trueFileName
-	}
-	sock.sendImage = async (jid, path, caption = '', quoted = '', options) => {
-		let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.exis[...]
-		return await sock.sendMessage(jid, {
-			image: buffer,
-			caption: caption,
-			...options
-		}, {
-			quoted
-		})
-	}
-	sock.sendMedia = async (jid, path, fileName = '', caption = '', quoted = '', options = {}) => {
-		let types = await sock.getFile(path, true)
-		let {
-			mime,
-			ext,
-			res,
-			data,
-			filename
-		} = types
-		if (res && res.status !== 200 || file.length <= 65536) {
-			try {
-				throw {
-					json: JSON.parse(file.toString())
-				}
-			} catch (e) {
-				if (e.json) throw e.json
-			}
-		}
-		let type = '',
-			mimetype = mime,
-			pathFile = filename
-		if (options.asDocument) type = 'document'
-		if (options.asSticker || /webp/.test(mime)) {
-			let {
-				writeExif
-			} = require('./lib_exif')
-			let media = {
-				mimetype: mime,
-				data
-			}
-			pathFile = await writeExif(media, {
-				packname: options.packname ? options.packname : global.packname,
-				author: options.author ? options.author : global.author,
-				categories: options.categories ? options.categories : []
-			})
-			await fs.promises.unlink(filename)
-			type = 'sticker'
-			mimetype = 'image/webp'
-		} else if (/image/.test(mime)) type = 'image'
-		else if (/video/.test(mime)) type = 'video'
-		else if (/audio/.test(mime)) type = 'audio'
-		else type = 'document'
-		await sock.sendMessage(jid, {
-			[type]: {
-				url: pathFile
-			},
-			caption,
-			mimetype,
-			fileName,
-			...options
-		}, {
-			quoted,
-			...options
-		})
-		return fs.promises.unlink(pathFile)
-	}
+ 		let mime = (message.msg || message).mimetype || ''
+ 		let messageType = message.mtype ? message.mtype.replace(/Message/gi, '') : mime.split('/')[0]
+ 		const stream = await downloadContentFromMessage(quoted, messageType)
+ 		let buffer = Buffer.from([])
+ 		for await (const chunk of stream) {
+ 			buffer = Buffer.concat([buffer, chunk])
+ 		}
+ 		let type = await FileType.fromBuffer(buffer)
+ 		trueFileName = attachExtension ? (filename + '.' + type.ext) : filename
+ 		// save to file
+ 		await fs.writeFileSync(trueFileName, buffer)
+ 		return trueFileName
+ 	}
+ 	sock.sendImage = async (jid, path, caption = '', quoted = '', options) => {
+ 		let buffer = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split('`')[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
+ 		return await sock.sendMessage(jid, {
+ 			image: buffer,
+ 			caption: caption,
+ 			...options
+ 		}, {
+ 			quoted
+ 		})
+ 	}
+ 	sock.sendMedia = async (jid, path, fileName = '', caption = '', quoted = '', options = {}) => {
+ 		let types = await sock.getFile(path, true)
+ 		let {
+ 			mime,
+ 			ext,
+ 			res,
+ 			data,
+ 			filename
+ 		} = types
+ 		if (res && res.status !== 200 || file.length <= 65536) {
+ 			try {
+ 				throw {
+ 					json: JSON.parse(file.toString())
+ 				}
+ 			} catch (e) {
+ 				if (e.json) throw e.json
+ 			}
+ 		}
+ 		let type = '',
+ 			mimetype = mime,
+ 			pathFile = filename
+ 		if (options.asDocument) type = 'document'
+ 		if (options.asSticker || /webp/.test(mime)) {
+ 			let {
+ 				writeExif
+ 			} = require('./lib_exif')
+ 			let media = {
+ 				mimetype: mime,
+ 				data
+ 			}
+ 			pathFile = await writeExif(media, {
+ 				packname: options.packname ? options.packname : global.packname,
+ 				author: options.author ? options.author : global.author,
+ 				categories: options.categories ? options.categories : []
+ 			})
+ 			await fs.promises.unlink(filename)
+ 			type = 'sticker'
+ 			mimetype = 'image/webp'
+ 		} else if (/image/.test(mime)) type = 'image'
+ 		else if (/video/.test(mime)) type = 'video'
+ 		else if (/audio/.test(mime)) type = 'audio'
+ 		else type = 'document'
+ 		await sock.sendMessage(jid, {
+ 			[type]: {
+ 				url: pathFile
+ 			},
+ 			caption,
+ 			mimetype,
+ 			fileName,
+ 			...options
+ 		}, {
+ 			quoted,
+ 			...options
+ 		})
+ 		return fs.promises.unlink(pathFile)
+ 	}
 
-	sock.getFile = async (PATH, returnAsFilename) => {
-		let res, filename
-		const data = Buffer.isBuffer(PATH) ? PATH : /^data:.*?\/.*?;base64,/i.test(PATH) ? Buffer.from(PATH.split`,` [1], 'base64') : /^https?:\/\//.test(PATH) ? await (res = await fetch(PATH)).buffer([...]
-		if (!Buffer.isBuffer(data)) throw new TypeError('Result is not a buffer')
-		const type = await FileType.fromBuffer(data) || {
-			mime: 'application/octet-stream',
-			ext: '.bin'
-		}
-		if (data && returnAsFilename && !filename)(filename = path.join(__dirname, './media/' + new Date * 1 + '.' + type.ext), await fs.promises.writeFile(filename, data))
-		return {
-			res,
-			filename,
-			...type,
-			data,
-			deleteFile() {
-				return filename && fs.promises.unlink(filename)
-			}
-		}
-	}
+ 	sock.getFile = async (PATH, returnAsFilename) => {
+ 		let res, filename
+ 		const data = Buffer.isBuffer(PATH) ? PATH : /^data:.*?\/.*?;base64,/i.test(PATH) ? Buffer.from(PATH.split('`')[1], 'base64') : /^https?:\/\//.test(PATH) ? await (res = await fetch(PATH)).buffer() : fs.existsSync(PATH) ? fs.readFileSync(PATH) : Buffer.alloc(0)
+ 		if (!Buffer.isBuffer(data)) throw new TypeError('Result is not a buffer')
+ 		const type = await FileType.fromBuffer(data) || {
+ 			mime: 'application/octet-stream',
+ 			ext: '.bin'
+ 		}
+ 		if (data && returnAsFilename && !filename)(filename = path.join(__dirname, './media/' + new Date * 1 + '.' + type.ext), await fs.promises.writeFile(filename, data))
+ 		return {
+ 			res,
+ 			filename,
+ 			...type,
+ 			data,
+ 			deleteFile() {
+ 				return filename && fs.promises.unlink(filename)
+ 			}
+ 		}
+ 	}
 
-	sock.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
-		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.exists[...]
-		let buffer
-		if (options && (options.packname || options.author)) {
-			buffer = await writeExifVid(buff, options)
-		} else {
-			buffer = await videoToWebp(buff)
-		}
+ 	sock.sendVideoAsSticker = async (jid, path, quoted, options = {}) => {
+ 		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split('`')[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
+ 		let buffer
+ 		if (options && (options.packname || options.author)) {
+ 			buffer = await writeExifVid(buff, options)
+ 		} else {
+ 			buffer = await videoToWebp(buff)
+ 		}
 
-		await sock.sendMessage(jid, {
-			sticker: {
-				url: buffer
-			},
-			...options
-		}, {
-			quoted
-		})
-		return buffer
-	}
-	sock.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
-		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split`,` [1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.exists[...]
-		let buffer
-		if (options && (options.packname || options.author)) {
-			buffer = await writeExifImg(buff, options)
-		} else {
-			buffer = await imageToWebp(buff)
-		}
+ 		await sock.sendMessage(jid, {
+ 			sticker: {
+ 				url: buffer
+ 			},
+ 			...options
+ 		}, {
+ 			quoted
+ 		})
+ 		return buffer
+ 	}
+ 	sock.sendImageAsSticker = async (jid, path, quoted, options = {}) => {
+ 		let buff = Buffer.isBuffer(path) ? path : /^data:.*?\/.*?;base64,/i.test(path) ? Buffer.from(path.split('`')[1], 'base64') : /^https?:\/\//.test(path) ? await (await getBuffer(path)) : fs.existsSync(path) ? fs.readFileSync(path) : Buffer.alloc(0)
+ 		let buffer
+ 		if (options && (options.packname || options.author)) {
+ 			buffer = await writeExifImg(buff, options)
+ 		} else {
+ 			buffer = await imageToWebp(buff)
+ 		}
 
-		await sock.sendMessage(jid, {
-			sticker: {
-				url: buffer
-			},
-			...options
-		}, {
-			quoted
-		})
-		return buffer
-	}
+ 		await sock.sendMessage(jid, {
+ 			sticker: {
+ 				url: buffer
+ 			},
+ 			...options
+ 		}, {
+ 			quoted
+ 		})
+ 		return buffer
+ 	}
 
-	sock.sendMediaAsSticker = async (jid, path, quoted, options = {}) => {
-		let {
-			ext,
-			mime,
-			data
-		} = await sock.getFile(path)
-		let media = {}
-		let buffer
-		media.data = data
-		media.mimetype = mime
-		if (options && (options.packname || options.author)) {
-			buffer = await writeExif(media, options)
-		} else {
-			buffer = /image/.test(mime) ? await imageToWebp(data) : /video/.test(mime) ? await videoToWebp(data) : ""
-		}
-		await sock.sendMessage(jid, {
-			sticker: {
-				url: buffer
-			},
-			...options
-		}, {
-			quoted
-		})
-		return buffer
-	}
+ 	sock.sendMediaAsSticker = async (jid, path, quoted, options = {}) => {
+ 		let {
+ 			ext,
+ 			mime,
+ 			data
+ 		} = await sock.getFile(path)
+ 		let media = {}
+ 		let buffer
+ 		media.data = data
+ 		media.mimetype = mime
+ 		if (options && (options.packname || options.author)) {
+ 			buffer = await writeExif(media, options)
+ 		} else {
+ 			buffer = /image/.test(mime) ? await imageToWebp(data) : /video/.test(mime) ? await videoToWebp(data) : ""
+ 		}
+ 		await sock.sendMessage(jid, {
+ 			sticker: {
+ 				url: buffer
+ 			},
+ 			...options
+ 		}, {
+ 			quoted
+ 		})
+ 		return buffer
+ 	}
 
-	sock.sendFakeLink = (jid, text, salam, pushname, quoted) => sock.sendMessage(jid, {
-		text: text,
-		contextInfo: {
-			"externalAdReply": {
-				"title": `Selamat ${salam} ${pushname}`,
-				"body": `© ${namaowner}`,
-				"previewType": "PHOTO",
-				"thumbnailUrl": ``,
-				"thumbnail": pp_bot,
-				"sourceUrl": 'tes'
-			}
-		}
-	}, {
-		quoted: quoted
-	})
+ 	sock.sendFakeLink = (jid, text, salam, pushname, quoted) => sock.sendMessage(jid, {
+ 		text: text,
+ 		contextInfo: {
+ 			"externalAdReply": {
+ 				"title": `Selamat ${salam} ${pushname}`,
+ 				"body": `© ${namaowner}`,
+ 				"previewType": "PHOTO",
+ 				"thumbnailUrl": ``,
+ 				"thumbnail": pp_bot,
+ 				"sourceUrl": 'tes'
+ 			}
+ 		}
+ 	}, {
+ 		quoted: quoted
+ 	})
 
-	sock.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false, options = {}) => {
-		let type = await sock.getFile(path, true)
-		let {
-			res,
-			data: file,
-			filename: pathFile
-		} = type
-		if (res && res.status !== 200 || file.length <= 65536) {
-			try {
-				throw {
-					json: JSON.parse(file.toString())
-				}
-			} catch (e) {
-				if (e.json) throw e.json
-			}
-		}
-		let opt = {
-			filename
-		}
-		if (quoted) opt.quoted = quoted
-		if (!type) options.asDocument = true
-		let mtype = '',
-			mimetype = type.mime,
-			convert
-		if (/webp/.test(type.mime) || (/image/.test(type.mime) && options.asSticker)) mtype = 'sticker'
-		else if (/image/.test(type.mime) || (/webp/.test(type.mime) && options.asImage)) mtype = 'image'
-		else if (/video/.test(type.mime)) mtype = 'video'
-		else if (/audio/.test(type.mime))(
-			convert = await (ptt ? toPTT : toAudio)(file, type.ext),
-			file = convert.data,
-			pathFile = convert.filename,
-			mtype = 'audio',
-			mimetype = 'audio/ogg; codecs=opus'
-		)
-		else mtype = 'document'
-		if (options.asDocument) mtype = 'document'
+ 	sock.sendFile = async (jid, path, filename = '', caption = '', quoted, ptt = false, options = {}) => {
+ 		let type = await sock.getFile(path, true)
+ 		let {
+ 			res,
+ 			data: file,
+ 			filename: pathFile
+ 		} = type
+ 		if (res && res.status !== 200 || file.length <= 65536) {
+ 			try {
+ 				throw {
+ 					json: JSON.parse(file.toString())
+ 				}
+ 			} catch (e) {
+ 				if (e.json) throw e.json
+ 			}
+ 		}
+ 		let opt = {
+ 			filename
+ 		}
+ 		if (quoted) opt.quoted = quoted
+ 		if (!type) options.asDocument = true
+ 		let mtype = '',
+ 			mimetype = type.mime,
+ 			convert
+ 		if (/webp/.test(type.mime) || (/image/.test(type.mime) && options.asSticker)) mtype = 'sticker'
+ 		else if (/image/.test(type.mime) || (/webp/.test(type.mime) && options.asImage)) mtype = 'image'
+ 		else if (/video/.test(type.mime)) mtype = 'video'
+ 		else if (/audio/.test(type.mime))(
+ 			convert = await (ptt ? toPTT : toAudio)(file, type.ext),
+ 			file = convert.data,
+ 			pathFile = convert.filename,
+ 			mtype = 'audio',
+ 			mimetype = 'audio/ogg; codecs=opus'
+ 		)
+ 		else mtype = 'document'
+ 		if (options.asDocument) mtype = 'document'
 
-		delete options.asSticker
-		delete options.asLocation
-		delete options.asVideo
-		delete options.asDocument
-		delete options.asImage
+ 		delete options.asSticker
+ 		delete options.asLocation
+ 		delete options.asVideo
+ 		delete options.asDocument
+ 		delete options.asImage
 
-		let message = {
-			...options,
-			caption,
-			ptt,
-			[mtype]: {
-				url: pathFile
-			},
-			mimetype
-		}
-		let m
-		try {
-			m = await sock.sendMessage(jid, message, {
-				...opt,
-				...options
-			})
-		} catch (e) {
-			//console.error(e)
-			m = null
-		} finally {
-			if (!m) m = await sock.sendMessage(jid, {
-				...message,
-				[mtype]: file
-			}, {
-				...opt,
-				...options
-			})
-			file = null
-			return m
-		}
-	}
+ 		let message = {
+ 			...options,
+ 			caption,
+ 			ptt,
+ 			[mtype]: {
+ 				url: pathFile
+ 			},
+ 			mimetype
+ 		}
+ 		let m
+ 		try {
+ 			m = await sock.sendMessage(jid, message, {
+ 				...opt,
+ 				...options
+ 			})
+ 		} catch (e) {
+ 			//console.error(e)
+ 			m = null
+ 		} finally {
+ 			if (!m) m = await sock.sendMessage(jid, {
+ 				...message,
+ 				[mtype]: file
+ 			}, {
+ 				...opt,
+ 				...options
+ 			})
+ 			file = null
+ 			return m
+ 		}
+ 	}
 
-	sock.sendTextWithMentions = async (jid, text, quoted, options = {}) => sock.sendMessage(jid, {
-		text: text,
-		mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'),
-		...options
-	}, {
-		quoted
-	})
+ 	sock.sendTextWithMentions = async (jid, text, quoted, options = {}) => sock.sendMessage(jid, {
+ 		text: text,
+ 		mentions: [...text.matchAll(/@(\d{0,16})/g)].map(v => v[1] + '@s.whatsapp.net'),
+ 		...options
+ 	}, {
+ 		quoted
+ 	})
 
-	return sock
+ 	return sock
 }
 
 Botstarted()
